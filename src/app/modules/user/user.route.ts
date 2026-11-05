@@ -3,9 +3,15 @@ import { userController } from "./user.controller";
 import auth from "../../middlewares/auth";
 import { Role } from "../../../../generated/prisma/enums";
 
+import { validateRegistrationRequest } from "./user.validation";
+
+import { ProfileRoutes } from "./profile.route";
+
 const router = express.Router();
+router.use("/me", ProfileRoutes);
 
 router.post("/",
+    validateRegistrationRequest,
     userController.createUser
 )
 router.get("/chapter-completion-status/:chapterId", auth(Role.student, Role.admin), userController.isChapterCompleted)

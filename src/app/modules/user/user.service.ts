@@ -7,6 +7,8 @@ import AppError from "../../errors/appErrors";
 import { jwtGenerator } from "../../../utils/jwt";
 import { Secret } from "jsonwebtoken";
 import { StringValue } from "ms";
+import { publicUserSelect } from "../../../utils/publicUserSelect";
+import RequestValidationError from "../../errors/requestValidationError";
 
 const generateStudentId = async () => {
     const lastUser = await prisma.user.findFirst({
@@ -29,40 +31,44 @@ const generateStudentId = async () => {
 };
 
 const createUser = async (payload: IUser) => {
-    const hashedPassword = await bcrypt.hash(payload.password, Number(config.salt_rounds))
-
+    const existingUser = await prisma.user.findFirst({
+        where: { email: { equals: payload.email, mode: "insensitive" } },
+        select: { id: true },
+    });
+    if (existingUser) throw new RequestValidationError({ email: "এই ইমেইলে ইতিমধ্যে একটি অ্যাকাউন্ট আছে" }, 409);
+    const hashedPassword = await bcrypt.hash(payload.password, Number(config.salt_rounds));
     const userData = {
-        ...payload,
+        fullName: payload.fullName,
+        email: payload.email,
+        institution: payload.institution,
+        class: payload.class,
+        guardianPhone: payload.guardianPhone,
+        division: payload.division,
+        district: payload.district,
+        thana: payload.thana,
+        profileImg: payload.profileImg,
         studentId: await generateStudentId(),
         password: hashedPassword,
-        role: Role.student
-    }
-
+        role: Role.student,
+    };
     const result = await prisma.$transaction(async (transaction) => {
-        const createUser = await transaction.user.create({
-            data: userData
-        })
-
-        const chapters = [1, 14, 15, 3];
-
-        const chapterData = chapters.map((chapterId) => ({
-            userId: createUser.id,
-            quizLevel: null,
-            chapterId,
-        }));
-
+        const user = await transaction.user.create({ data: userData, select: publicUserSelect });
         await transaction.isChapterComplete.createMany({
-            data: chapterData
-        })
-        return createUser;
-    })
-
-    const accessToken = await jwtGenerator({
+            data: [1, 14, 15, 3].map((chapterId) => ({ userId: user.id, quizLevel: null, chapterId })),
+        });
+        return user;
+    });
+    const accessToken = jwtGenerator({
         userInfo: { email: result.email, role: result.role },
         createSecretKey: config.jwt.token_secret as Secret,
         expiresIn: config.jwt.token_expires_in as StringValue,
-    })
-    return { ...result, accessToken };
+    });
+    const refreshToken = jwtGenerator({
+        userInfo: { email: result.email, role: result.role },
+        createSecretKey: config.jwt.refresh_token_secret as Secret,
+        expiresIn: config.jwt.refresh_token_expires_in as StringValue,
+    });
+    return { ...result, accessToken, refreshToken };
 }
 
 const isChapterCompleted = async (payload: { email: string, chapterId: number }) => {

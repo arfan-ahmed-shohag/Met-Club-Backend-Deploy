@@ -7,16 +7,24 @@ import AppError from "../../errors/appErrors";
 import { Status } from "../../../../generated/prisma/enums";
 import { jwtGenerator, jwtVerifier } from "../../../utils/jwt";
 
+import { publicUserSelect } from "../../../utils/publicUserSelect";
+
+const getCurrentUser = async (email: string) => {
+    const user = await prisma.user.findUnique({ where: { email, status: Status.active }, select: publicUserSelect });
+    if (!user) throw new AppError(401, "Unauthorized");
+    return user;
+};
+
 const loginUser = async (payload: { email: string, password: string }) => {
-    const isUserExist = await prisma.user.findUnique({
+    const isUserExist = await prisma.user.findFirst({
         where: {
-            email: payload.email,
+            email: { equals: payload.email, mode: "insensitive" },
             status: Status.active
         }
     })
 
     if (!isUserExist) {
-        throw new AppError(404, "ব্যবহারকারী খুঁজে পাওয়া যায়নি!")
+        throw new AppError(401, "ইমেইল অথবা পাসওয়ার্ড সঠিক নয়!")
     }
 
     const isPasswordMarched = await bcrypt.compare(payload.password, isUserExist.password)
@@ -79,7 +87,7 @@ const generateAccessTokenUsingRefreshToken = async (refreshToken: string) => {
     });
 
     if (!user) {
-        throw new AppError(404, "User not found");
+        throw new AppError(401, "Unauthorized");
     }
 
     const newAccessToken = jwtGenerator({
@@ -100,6 +108,7 @@ const logout = async () => {
 
 export const AuthService = {
     loginUser,
+    getCurrentUser,
     logout,
     generateAccessTokenUsingRefreshToken
 };

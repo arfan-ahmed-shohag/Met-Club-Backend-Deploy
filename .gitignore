@@ -4,3 +4,6 @@ node_modules
 /api
 
 /generated
+
+# User uploaded media
+/uploads/

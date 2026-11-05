@@ -5,6 +5,8 @@ export interface IUser {
 	class: number;
 	guardianPhone: string;
 	password: string;
-	district?: string;
+	division: string;
+	district: string;
+	thana: string;
 	profileImg?: string;
 }

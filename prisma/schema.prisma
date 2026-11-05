@@ -20,7 +20,9 @@ model User {
 
   guardianPhone String
 
+  division String?
   district String?
+  thana    String?
 
   password String
 

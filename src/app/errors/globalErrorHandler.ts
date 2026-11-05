@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Prisma } from "../../../generated/prisma/client";
 // 👇 Import Fix: পুরো লাইব্রেরি ইম্পোর্ট করে destructure করুন
 import jwt from "jsonwebtoken";
+import RequestValidationError from "./requestValidationError";
 const { JsonWebTokenError, TokenExpiredError } = jwt; 
 
 class CustomError extends Error {
@@ -69,6 +70,7 @@ export const globalErrorHandler = (
     statusCode,
     message,
     errorMessage,
+    ...(error instanceof RequestValidationError ? { errors: error.errors } : {}),
     // error, // প্রোডাকশনে এটি অফ রাখাই ভালো
   });
 };
