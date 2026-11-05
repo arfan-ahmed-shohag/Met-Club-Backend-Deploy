@@ -4,6 +4,7 @@ import { AuthRoutes } from '../modules/auth/auth.route';
 import { ContentRoutes } from '../modules/content/content.route';
 import { TutorialRoutes } from '../modules/tutorial/tutorial.route';
 import { SchoolRoutes } from '../modules/school/school.route';
+import { BlogRoutes } from '../modules/blog/blog.route';
 const router = express.Router();
 
 const routes = [
@@ -26,6 +27,10 @@ const routes = [
     {
         path: "/schools",
         route: SchoolRoutes
+    },
+    {
+        path: "/blogs",
+        route: BlogRoutes
     }
 ]
 

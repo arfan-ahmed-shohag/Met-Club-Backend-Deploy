@@ -34,6 +34,7 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  blogPosts BlogPost[]
 }
 
 model IsChapterComplete {
@@ -64,6 +65,22 @@ model Tutorial {
   updatedAt      DateTime @updatedAt
 }
 
+model BlogPost {
+  id          String        @id @default(uuid())
+  title         String
+  content       String
+  featuredImage String?
+  status        BlogStatus @default(pending)
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status, createdAt])
+  @@index([authorId])
+}
+
 enum Role {
   student
   admin
@@ -72,6 +89,11 @@ enum Role {
 enum Status {
   active
   blocked
+}
+
+enum BlogStatus {
+  pending
+  published
 }
 
 enum QuizLevel {
