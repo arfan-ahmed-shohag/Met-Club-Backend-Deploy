@@ -25,7 +25,7 @@ app.use(
 );
 
 app.get("/", (req: Request, res: Response) => {
-    res.send({ "message": "Server is running!" })
+    res.send({ "message": "Server is running!............." })
 })
 
 app.use(globalErrorHandler)
