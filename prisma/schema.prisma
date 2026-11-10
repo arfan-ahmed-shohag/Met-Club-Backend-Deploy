@@ -65,6 +65,16 @@ model Tutorial {
   updatedAt      DateTime @updatedAt
 }
 
+model GalleryImage {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  alt       String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
 model BlogPost {
   id          String        @id @default(uuid())
   title         String
