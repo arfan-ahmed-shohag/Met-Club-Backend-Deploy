@@ -22,12 +22,12 @@ async function removeImageFile(imageUrl?: string | null) {
 
 const listGalleryImages = catchAsync(async (req: Request, res: Response) => {
   const requestedPage = Number(req.query.page ?? 1);
-  const requestedLimit = Number(req.query.limit ?? 10);
+  const requestedLimit = Number(req.query.limit ?? 9);
   if (!Number.isInteger(requestedPage) || requestedPage < 1 || !Number.isInteger(requestedLimit) || requestedLimit < 1) {
     throw new AppError(400, "Page and limit must be positive integers");
   }
   const page = requestedPage;
-  const limit = Math.min(requestedLimit, 10);
+  const limit = Math.min(requestedLimit, 9);
   const { items, total } = await GalleryService.listGalleryImages(page, limit);
   sendResponse(res, {
     statusCode: 200,
