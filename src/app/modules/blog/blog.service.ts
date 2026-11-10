@@ -47,8 +47,8 @@ const getAllBlogPostsForAdmin = async () => {
   });
 };
 
-const publishBlogPost = async (id: number) => {
-  if (!Number.isInteger(id) || id < 1) throw new AppError(400, "A valid blog post id is required");
+const publishBlogPost = async (id: string) => {
+  if (!id.trim()) throw new AppError(400, "A valid blog post id is required");
 
   const post = await prisma.blogPost.findUnique({ where: { id } });
   if (!post) throw new AppError(404, "Blog post not found");

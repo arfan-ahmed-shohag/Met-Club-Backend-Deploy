@@ -60,7 +60,7 @@ const getAllBlogPostsForAdmin = catchAsync(async (_req: Request, res: Response) 
 });
 
 const publishBlogPost = catchAsync(async (req: Request, res: Response) => {
-  const result = await BlogService.publishBlogPost(Number(req.params.id));
+  const result = await BlogService.publishBlogPost(req.params.id || "");
   sendResponse(res, {
     statusCode: 200,
     message: "Blog post published successfully.",
