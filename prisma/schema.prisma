@@ -75,6 +75,18 @@ model GalleryImage {
   @@index([createdAt])
 }
 
+model HomeVideo {
+  id             String   @id @default(uuid())
+  name           String
+  title          String
+  videoLink      String
+  thumbnailImage String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
 model BlogPost {
   id          String        @id @default(uuid())
   title         String
