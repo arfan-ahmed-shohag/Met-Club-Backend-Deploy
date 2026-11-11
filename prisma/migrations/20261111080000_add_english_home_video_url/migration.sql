@@ -1,0 +1,1 @@
+ALTER TABLE "HomeVideo" ADD COLUMN "videoLinkEn" TEXT NOT NULL DEFAULT '';

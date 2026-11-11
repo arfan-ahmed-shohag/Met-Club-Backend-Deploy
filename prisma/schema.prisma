@@ -82,6 +82,7 @@ model HomeVideo {
   title          String
   titleEn        String   @default("")
   videoLink      String
+  videoLinkEn    String   @default("")
   thumbnailImage String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -102,6 +103,22 @@ model Story {
   updatedAt      DateTime @updatedAt
 
   @@index([createdAt])
+}
+
+model PdfResource {
+  id             String              @id @default(uuid())
+  category       PdfResourceCategory
+  titleBn        String
+  titleEn        String
+  descriptionBn  String
+  descriptionEn  String
+  pdfUrl         String
+  pdfUrlEn       String?
+  featuredImageUrl String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([category, createdAt])
 }
 
 model BlogPost {
@@ -135,6 +152,12 @@ enum Status {
 enum BlogStatus {
   pending
   published
+}
+
+enum PdfResourceCategory {
+  comics
+  flyer
+  pressRelease
 }
 
 enum QuizLevel {

@@ -65,5 +65,6 @@ const uploadBlogImage = (req: Request, res: Response, next: NextFunction) => {
 router.post("/images", auth(Role.student, Role.admin), uploadBlogImage);
 router.post("/", auth(Role.student, Role.admin), validateCreateBlog, BlogController.createBlogPost);
 router.patch("/:id/publish", auth(Role.admin), BlogController.publishBlogPost);
+router.patch("/:id/unpublish", auth(Role.admin), BlogController.unpublishBlogPost);
 
 export const BlogRoutes = router;

@@ -68,10 +68,30 @@ const publishBlogPost = async (id: string) => {
   });
 };
 
+const unpublishBlogPost = async (id: string) => {
+  if (!id.trim()) throw new AppError(400, "A valid blog post id is required");
+
+  const post = await prisma.blogPost.findUnique({ where: { id } });
+  if (!post) throw new AppError(404, "Blog post not found");
+  if (post.status === BlogStatus.pending) {
+    return prisma.blogPost.findUniqueOrThrow({
+      where: { id },
+      include: { author: { select: { ...authorSelection, email: true } } },
+    });
+  }
+
+  return prisma.blogPost.update({
+    where: { id },
+    data: { status: BlogStatus.pending, publishedAt: null },
+    include: { author: { select: { ...authorSelection, email: true } } },
+  });
+};
+
 export const BlogService = {
   createBlogPost,
   getPublishedBlogPosts,
   getBlogPostsByAuthor,
   getAllBlogPostsForAdmin,
   publishBlogPost,
+  unpublishBlogPost,
 };

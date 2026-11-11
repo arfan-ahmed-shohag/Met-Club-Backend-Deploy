@@ -48,14 +48,15 @@ const createHomeVideo = catchAsync(async (req: UploadRequest, res: Response) => 
   const title = typeof req.body.title === "string" ? req.body.title.trim() : "";
   const titleEn = typeof req.body.titleEn === "string" ? req.body.titleEn.trim() : "";
   const videoLink = typeof req.body.videoLink === "string" ? req.body.videoLink.trim() : "";
+  const videoLinkEn = typeof req.body.videoLinkEn === "string" ? req.body.videoLinkEn.trim() : "";
   const thumbnailImage = req.file ? `/uploads/videos/${req.file.filename}` : "";
   if (!thumbnailImage) throw new AppError(400, "A thumbnail image is required");
-  if (name.length < 2 || name.length > 120 || nameEn.length < 2 || nameEn.length > 120 || title.length < 2 || title.length > 200 || titleEn.length < 2 || titleEn.length > 200 || !isYouTubeUrl(videoLink)) {
+  if (name.length < 2 || name.length > 120 || nameEn.length < 2 || nameEn.length > 120 || title.length < 2 || title.length > 200 || titleEn.length < 2 || titleEn.length > 200 || !isYouTubeUrl(videoLink) || (videoLinkEn && !isYouTubeUrl(videoLinkEn))) {
     if (thumbnailImage) await removeThumbnail(thumbnailImage);
     throw new AppError(400, "Enter a valid name, title and YouTube video link");
   }
   try {
-    const video = await HomeVideoService.createHomeVideo({ name, nameEn, title, titleEn, videoLink, thumbnailImage });
+    const video = await HomeVideoService.createHomeVideo({ name, nameEn, title, titleEn, videoLink, videoLinkEn, thumbnailImage });
     sendResponse(res, { statusCode: 201, message: "Home video added successfully.", data: video });
   } catch (error) {
     if (thumbnailImage) await removeThumbnail(thumbnailImage);
@@ -69,14 +70,15 @@ const updateHomeVideo = catchAsync(async (req: UploadRequest, res: Response) => 
   const title = typeof req.body.title === "string" ? req.body.title.trim() : "";
   const titleEn = typeof req.body.titleEn === "string" ? req.body.titleEn.trim() : "";
   const videoLink = typeof req.body.videoLink === "string" ? req.body.videoLink.trim() : "";
+  const videoLinkEn = typeof req.body.videoLinkEn === "string" ? req.body.videoLinkEn.trim() : "";
   const thumbnailImage = req.file ? `/uploads/videos/${req.file.filename}` : "";
-  if (name.length < 2 || name.length > 120 || nameEn.length < 2 || nameEn.length > 120 || title.length < 2 || title.length > 200 || titleEn.length < 2 || titleEn.length > 200 || !isYouTubeUrl(videoLink)) {
+  if (name.length < 2 || name.length > 120 || nameEn.length < 2 || nameEn.length > 120 || title.length < 2 || title.length > 200 || titleEn.length < 2 || titleEn.length > 200 || !isYouTubeUrl(videoLink) || (videoLinkEn && !isYouTubeUrl(videoLinkEn))) {
     if (thumbnailImage) await removeThumbnail(thumbnailImage);
     throw new AppError(400, "Enter a valid name, title and YouTube video link");
   }
   let result: Awaited<ReturnType<typeof HomeVideoService.updateHomeVideo>>;
   try {
-    result = await HomeVideoService.updateHomeVideo(typeof req.params.id === "string" ? req.params.id : "", { name, nameEn, title, titleEn, videoLink, ...(thumbnailImage ? { thumbnailImage } : {}) });
+    result = await HomeVideoService.updateHomeVideo(typeof req.params.id === "string" ? req.params.id : "", { name, nameEn, title, titleEn, videoLink, videoLinkEn, ...(thumbnailImage ? { thumbnailImage } : {}) });
   } catch (error) {
     if (thumbnailImage) await removeThumbnail(thumbnailImage);
     throw error;

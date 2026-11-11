@@ -60,10 +60,19 @@ const getAllBlogPostsForAdmin = catchAsync(async (_req: Request, res: Response) 
 });
 
 const publishBlogPost = catchAsync(async (req: Request, res: Response) => {
-  const result = await BlogService.publishBlogPost(req.params.id || "");
+  const result = await BlogService.publishBlogPost(typeof req.params.id === "string" ? req.params.id : "");
   sendResponse(res, {
     statusCode: 200,
     message: "Blog post published successfully.",
+    data: result,
+  });
+});
+
+const unpublishBlogPost = catchAsync(async (req: Request, res: Response) => {
+  const result = await BlogService.unpublishBlogPost(typeof req.params.id === "string" ? req.params.id : "");
+  sendResponse(res, {
+    statusCode: 200,
+    message: "Blog post unpublished successfully.",
     data: result,
   });
 });
@@ -75,4 +84,5 @@ export const BlogController = {
   getMyBlogPosts,
   getAllBlogPostsForAdmin,
   publishBlogPost,
+  unpublishBlogPost,
 };

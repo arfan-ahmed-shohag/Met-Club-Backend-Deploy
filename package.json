@@ -11,7 +11,8 @@
     "start": "node api/server.js",
     "seed:home-videos": "tsx src/scripts/seedHomeVideos.ts",
     "seed:bilingual-blogs": "tsx src/scripts/seedBilingualBlogs.ts",
-    "seed:stories": "tsx src/scripts/seedStories.ts"
+    "seed:stories": "tsx src/scripts/seedStories.ts",
+    "seed:pdf-resources": "tsx src/scripts/seedPdfResources.ts"
   },
   "keywords": [],
   "author": "",
