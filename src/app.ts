@@ -24,6 +24,11 @@ app.use(
     express.static(path.join(process.cwd(), "uploads"))
 );
 
+app.use(
+    "/story-assets",
+    express.static(path.join(process.cwd(), "public", "stories"))
+);
+
 app.get("/", (req: Request, res: Response) => {
     res.send({ "message": "Server is running!" })
 })

@@ -12,10 +12,10 @@ const listHomeVideos = async (page: number, limit: number) => {
   return { items, total };
 };
 
-const createHomeVideo = (input: { name: string; title: string; videoLink: string; thumbnailImage: string }) =>
+const createHomeVideo = (input: { name: string; nameEn: string; title: string; titleEn: string; videoLink: string; thumbnailImage: string }) =>
   prisma.homeVideo.create({ data: input });
 
-const updateHomeVideo = async (id: string, input: { name: string; title: string; videoLink: string; thumbnailImage?: string }) => {
+const updateHomeVideo = async (id: string, input: { name: string; nameEn: string; title: string; titleEn: string; videoLink: string; thumbnailImage?: string }) => {
   const current = await prisma.homeVideo.findUnique({ where: { id } });
   if (!current) return null;
   const video = await prisma.homeVideo.update({ where: { id }, data: input });

@@ -7,6 +7,7 @@ import { SchoolRoutes } from '../modules/school/school.route';
 import { BlogRoutes } from '../modules/blog/blog.route';
 import { GalleryRoutes } from '../modules/gallery/gallery.route';
 import { HomeVideoRoutes } from '../modules/homeVideo/homeVideo.route';
+import { StoryRoutes } from '../modules/story/story.route';
 const router = express.Router();
 
 const routes = [
@@ -41,6 +42,10 @@ const routes = [
     {
         path: "/videos",
         route: HomeVideoRoutes
+    },
+    {
+        path: "/stories",
+        route: StoryRoutes
     }
 ]
 

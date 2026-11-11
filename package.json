@@ -9,7 +9,9 @@
     "build": "prisma generate && tsup src/server.ts --format esm --platform node --target node20 --outDir api --external pg-native",
     "postinstall": "prisma generate",
     "start": "node api/server.js",
-    "seed:home-videos": "tsx src/scripts/seedHomeVideos.ts"
+    "seed:home-videos": "tsx src/scripts/seedHomeVideos.ts",
+    "seed:bilingual-blogs": "tsx src/scripts/seedBilingualBlogs.ts",
+    "seed:stories": "tsx src/scripts/seedStories.ts"
   },
   "keywords": [],
   "author": "",

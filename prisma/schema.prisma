@@ -78,9 +78,26 @@ model GalleryImage {
 model HomeVideo {
   id             String   @id @default(uuid())
   name           String
+  nameEn         String   @default("")
   title          String
+  titleEn        String   @default("")
   videoLink      String
   thumbnailImage String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+model Story {
+  id             String   @id @default(uuid())
+  quoteBn        String
+  quoteEn        String
+  authorNameBn   String
+  authorNameEn   String
+  authorDetailBn String
+  authorDetailEn String
+  imageUrl       String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -90,7 +107,9 @@ model HomeVideo {
 model BlogPost {
   id          String        @id @default(uuid())
   title         String
+  titleEn       String        @default("")
   content       String
+  contentEn     String        @default("")
   featuredImage String?
   status        BlogStatus @default(pending)
   authorId    String

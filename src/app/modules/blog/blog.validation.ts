@@ -3,7 +3,9 @@ import RequestValidationError from "../../errors/requestValidationError";
 
 export type CreateBlogInput = {
   title: string;
+  titleEn: string;
   content: string;
+  contentEn: string;
   featuredImage: string | null;
 };
 
@@ -58,10 +60,19 @@ export function parseCreateBlog(input: unknown): CreateBlogInput {
     ? input as Record<string, unknown>
     : {};
   const title = typeof body.title === "string" ? body.title.trim() : "";
+  const titleEn = typeof body.titleEn === "string" ? body.titleEn.trim() : "";
   const rawContent = typeof body.content === "string" ? body.content.trim() : "";
+  const rawContentEn = typeof body.contentEn === "string" ? body.contentEn.trim() : "";
   const rawFeaturedImage = typeof body.featuredImage === "string" ? body.featuredImage.trim() : "";
   const content = sanitizeBlogHtml(rawContent);
+  const contentEn = sanitizeBlogHtml(rawContentEn);
   const textContent = content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const textContentEn = contentEn
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&[a-z0-9#]+;/gi, " ")
@@ -69,7 +80,9 @@ export function parseCreateBlog(input: unknown): CreateBlogInput {
     .trim();
   const errors: Record<string, string> = {};
   const imageCount = content.match(/<img\b/g)?.length || 0;
+  const imageCountEn = contentEn.match(/<img\b/g)?.length || 0;
   if (imageCount > 12) errors.content = "A blog can contain at most 12 images";
+  if (imageCountEn > 12) errors.contentEn = "An English blog can contain at most 12 images";
   if (body.featuredImage !== undefined && body.featuredImage !== null && typeof body.featuredImage !== "string") {
     errors.featuredImage = "Featured image must be a valid uploaded image";
   } else if (rawFeaturedImage && !blogImagePath.test(rawFeaturedImage)) {
@@ -79,12 +92,18 @@ export function parseCreateBlog(input: unknown): CreateBlogInput {
   if (title.length < 4 || title.length > 160) {
     errors.title = "Title must contain between 4 and 160 characters";
   }
+  if (titleEn.length < 4 || titleEn.length > 160) {
+    errors.titleEn = "English title must contain between 4 and 160 characters";
+  }
   if (rawContent.length > 120000 || textContent.length < 30 || textContent.length > 30000) {
     errors.content = "Blog text must contain between 30 and 30000 characters";
   }
+  if (rawContentEn.length > 120000 || textContentEn.length < 30 || textContentEn.length > 30000) {
+    errors.contentEn = "English blog text must contain between 30 and 30000 characters";
+  }
   if (Object.keys(errors).length) throw new RequestValidationError(errors);
 
-  return { title, content, featuredImage: rawFeaturedImage || null };
+  return { title, titleEn, content, contentEn, featuredImage: rawFeaturedImage || null };
 }
 
 export function validateCreateBlog(req: Request, _res: Response, next: NextFunction) {

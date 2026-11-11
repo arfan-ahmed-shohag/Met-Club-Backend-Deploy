@@ -8,11 +8,13 @@ const authorSelection = {
   profileImg: true,
 } as const;
 
-const createBlogPost = async (authorEmail: string, input: { title: string; content: string; featuredImage: string | null }) => {
+const createBlogPost = async (authorEmail: string, input: { title: string; titleEn: string; content: string; contentEn: string; featuredImage: string | null }) => {
   return prisma.blogPost.create({
     data: {
       title: input.title,
+      titleEn: input.titleEn,
       content: input.content,
+      contentEn: input.contentEn,
       featuredImage: input.featuredImage,
       author: { connect: { email: authorEmail } },
     },
