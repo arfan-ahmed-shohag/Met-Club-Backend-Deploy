@@ -9,33 +9,40 @@ type MulterFile = {
 
 type MulReq = Request & { file?: MulterFile };
 
-const createOrUpdateTutorial = catchAsync(async (req: MulReq, res: Response) => {
-  const { tutorialNumber, name, title, videoLink, thumbnailImage } = req.body as {
-    tutorialNumber: string;
-    name: string;
-    title: string;
-    videoLink: string;
-    thumbnailImage?: string;
-  };
+const createOrUpdateTutorial = catchAsync(
+  async (req: MulReq, res: Response) => {
+    const { tutorialNumber, name, title, videoLink, thumbnailImage } =
+      req.body as {
+        tutorialNumber: string;
+        name: string;
+        title: string;
+        videoLink: string;
+        thumbnailImage?: string;
+      };
 
-  const tutorialId = req.params.id ? Number(req.params.id) : null;
-  const thumbnailPath = req.file ? `/uploads/${req.file.filename}` : thumbnailImage || null;
+    const tutorialId = req.params.id ? Number(req.params.id) : null;
+    const thumbnailPath = req.file
+      ? `/uploads/${req.file.filename}`
+      : thumbnailImage || null;
 
-  const result = await TutorialService.createOrUpdateTutorial({
-    id: tutorialId,
-    tutorialNumber: Number(tutorialNumber),
-    name,
-    title,
-    thumbnailImage: thumbnailPath,
-    videoLink,
-  });
+    const result = await TutorialService.createOrUpdateTutorial({
+      id: tutorialId,
+      tutorialNumber: Number(tutorialNumber),
+      name,
+      title,
+      thumbnailImage: thumbnailPath,
+      videoLink,
+    });
 
-  sendResponse(res, {
-    statusCode: 200,
-    message: tutorialId ? "Tutorial updated successfully!" : "Tutorial created successfully!",
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      message: tutorialId
+        ? "Tutorial updated successfully!"
+        : "Tutorial created successfully!",
+      data: result,
+    });
+  },
+);
 
 const getAllTutorials = catchAsync(async (_req: Request, res: Response) => {
   const result = await TutorialService.getAllTutorials();

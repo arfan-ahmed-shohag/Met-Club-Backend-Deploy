@@ -12,12 +12,19 @@ const listGalleryImages = async (page: number, limit: number) => {
   return { items, total };
 };
 
-const createGalleryImage = (imageUrl: string, alt: string) => prisma.galleryImage.create({ data: { imageUrl, alt } });
+const createGalleryImage = (imageUrl: string, alt: string) =>
+  prisma.galleryImage.create({ data: { imageUrl, alt } });
 
-const updateGalleryImage = async (id: string, input: { imageUrl?: string; alt?: string }) => {
+const updateGalleryImage = async (
+  id: string,
+  input: { imageUrl?: string; alt?: string },
+) => {
   const current = await prisma.galleryImage.findUnique({ where: { id } });
   if (!current) return null;
-  const image = await prisma.galleryImage.update({ where: { id }, data: input });
+  const image = await prisma.galleryImage.update({
+    where: { id },
+    data: input,
+  });
   return { image, previousImageUrl: input.imageUrl ? current.imageUrl : null };
 };
 
@@ -28,4 +35,9 @@ const deleteGalleryImage = async (id: string) => {
   return current;
 };
 
-export const GalleryService = { listGalleryImages, createGalleryImage, updateGalleryImage, deleteGalleryImage };
+export const GalleryService = {
+  listGalleryImages,
+  createGalleryImage,
+  updateGalleryImage,
+  deleteGalleryImage,
+};

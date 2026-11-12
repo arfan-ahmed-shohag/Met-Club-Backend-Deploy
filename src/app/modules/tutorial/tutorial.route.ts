@@ -11,20 +11,29 @@ const router = express.Router();
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
-	fs.mkdirSync(uploadDir, { recursive: true });
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-	destination: (_req: any, _file: any, cb: any) => cb(null, uploadDir),
-	filename: (_req: any, file: any, cb: any) => cb(null, `${Date.now()}-${file.originalname}`),
+  destination: (_req: any, _file: any, cb: any) => cb(null, uploadDir),
+  filename: (_req: any, file: any, cb: any) =>
+    cb(null, `${Date.now()}-${file.originalname}`),
 });
 
 const upload = multer({ storage });
 
 router.get("/", TutorialController.getAllTutorials);
 router.get("/:id", TutorialController.getTutorialById);
-router.post("/", upload.single("thumbnail"), TutorialController.createOrUpdateTutorial);
-router.patch("/:id", upload.single("thumbnail"), TutorialController.createOrUpdateTutorial);
+router.post(
+  "/",
+  upload.single("thumbnail"),
+  TutorialController.createOrUpdateTutorial,
+);
+router.patch(
+  "/:id",
+  upload.single("thumbnail"),
+  TutorialController.createOrUpdateTutorial,
+);
 router.delete("/:id", TutorialController.deleteTutorial);
 
 export const TutorialRoutes = router;

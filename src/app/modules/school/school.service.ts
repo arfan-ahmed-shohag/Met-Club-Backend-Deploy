@@ -5,9 +5,9 @@ const createSchool = async (payload: any) => {
   return await prisma.school.create({
     data: {
       ...schoolData,
-      ...(members && { members: { create: members } })
+      ...(members && { members: { create: members } }),
     },
-    include: { members: true }
+    include: { members: true },
   });
 };
 
@@ -38,7 +38,7 @@ const updateSchool = async (id: number, payload: any) => {
       ...schoolData,
       ...(members && { members: { create: members } }),
     },
-    include: { members: true }
+    include: { members: true },
   });
 };
 

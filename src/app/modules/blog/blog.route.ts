@@ -24,12 +24,15 @@ const imageExtensions: Record<string, string> = {
 const blogImageUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, callback) => callback(null, blogImageDir),
-    filename: (_req, file, callback) => callback(null, randomUUID() + (imageExtensions[file.mimetype] || ".img")),
+    filename: (_req, file, callback) =>
+      callback(null, randomUUID() + (imageExtensions[file.mimetype] || ".img")),
   }),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, callback) => {
     if (!imageExtensions[file.mimetype]) {
-      callback(new AppError(400, "Only PNG, JPEG, WEBP and GIF images are supported"));
+      callback(
+        new AppError(400, "Only PNG, JPEG, WEBP and GIF images are supported"),
+      );
       return;
     }
     callback(null, true);
@@ -63,8 +66,17 @@ const uploadBlogImage = (req: Request, res: Response, next: NextFunction) => {
 };
 
 router.post("/images", auth(Role.student, Role.admin), uploadBlogImage);
-router.post("/", auth(Role.student, Role.admin), validateCreateBlog, BlogController.createBlogPost);
+router.post(
+  "/",
+  auth(Role.student, Role.admin),
+  validateCreateBlog,
+  BlogController.createBlogPost,
+);
 router.patch("/:id/publish", auth(Role.admin), BlogController.publishBlogPost);
-router.patch("/:id/unpublish", auth(Role.admin), BlogController.unpublishBlogPost);
+router.patch(
+  "/:id/unpublish",
+  auth(Role.admin),
+  BlogController.unpublishBlogPost,
+);
 
 export const BlogRoutes = router;

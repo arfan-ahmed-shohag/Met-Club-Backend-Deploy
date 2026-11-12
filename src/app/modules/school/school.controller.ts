@@ -16,7 +16,7 @@ type MulterFile = {
   buffer?: Buffer;
 };
 
-type MulReq = Request & { files?: MulterFile[], file?: MulterFile };
+type MulReq = Request & { files?: MulterFile[]; file?: MulterFile };
 
 const createSchool = catchAsync(async (req: MulReq, res: Response) => {
   let payload = req.body;
@@ -31,7 +31,8 @@ const createSchool = catchAsync(async (req: MulReq, res: Response) => {
   const files = req.files || [];
   if (payload.members && Array.isArray(payload.members)) {
     payload.members = payload.members.map((member: any) => {
-      const imgIdx = typeof member.imageIndex === "number" ? member.imageIndex : null;
+      const imgIdx =
+        typeof member.imageIndex === "number" ? member.imageIndex : null;
       const file = imgIdx !== null ? files[imgIdx] : undefined;
       if (file) {
         member.image = `/uploads/${file.filename}`;
@@ -71,7 +72,7 @@ const getSchoolById = catchAsync(async (req: Request, res: Response) => {
 
 const updateSchool = catchAsync(async (req: MulReq, res: Response) => {
   const id = Number(req.params.id);
-  
+
   let payload = req.body;
   if (req.body.data) {
     try {
@@ -84,7 +85,8 @@ const updateSchool = catchAsync(async (req: MulReq, res: Response) => {
   const files = req.files || [];
   if (payload.members && Array.isArray(payload.members)) {
     payload.members = payload.members.map((member: any) => {
-      const imgIdx = typeof member.imageIndex === "number" ? member.imageIndex : null;
+      const imgIdx =
+        typeof member.imageIndex === "number" ? member.imageIndex : null;
       const file = imgIdx !== null ? files[imgIdx] : undefined;
       if (file) {
         member.image = `/uploads/${file.filename}`;
@@ -115,7 +117,11 @@ const deleteSchool = catchAsync(async (req: Request, res: Response) => {
 const createMember = catchAsync(async (req: MulReq, res: Response) => {
   let payload = req.body;
   if (req.body.data) {
-    try { payload = JSON.parse(req.body.data); } catch (e) { payload = req.body; }
+    try {
+      payload = JSON.parse(req.body.data);
+    } catch (e) {
+      payload = req.body;
+    }
   }
   if (req.file) {
     payload.image = `/uploads/${req.file.filename}`;
@@ -132,7 +138,11 @@ const updateMember = catchAsync(async (req: MulReq, res: Response) => {
   const id = Number(req.params.id);
   let payload = req.body;
   if (req.body.data) {
-    try { payload = JSON.parse(req.body.data); } catch (e) { payload = req.body; }
+    try {
+      payload = JSON.parse(req.body.data);
+    } catch (e) {
+      payload = req.body;
+    }
   }
   if (req.file) {
     payload.image = `/uploads/${req.file.filename}`;

@@ -24,7 +24,10 @@ type StoryInput = {
 
 const createStory = (input: StoryInput) => prisma.story.create({ data: input });
 
-const updateStory = async (id: string, input: Omit<StoryInput, "imageUrl"> & { imageUrl?: string }) => {
+const updateStory = async (
+  id: string,
+  input: Omit<StoryInput, "imageUrl"> & { imageUrl?: string },
+) => {
   const current = await prisma.story.findUnique({ where: { id } });
   if (!current) return null;
   const story = await prisma.story.update({ where: { id }, data: input });
@@ -38,4 +41,9 @@ const deleteStory = async (id: string) => {
   return current;
 };
 
-export const StoryService = { listStories, createStory, updateStory, deleteStory };
+export const StoryService = {
+  listStories,
+  createStory,
+  updateStory,
+  deleteStory,
+};

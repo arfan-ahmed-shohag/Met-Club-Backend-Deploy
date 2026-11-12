@@ -11,7 +11,10 @@ router.patch("/change-password", auth(), changePassword);
 
 router.post("/login", validateLoginRequest, AuthController.login);
 router.get("/me", auth(), AuthController.me);
-router.get('/logout', AuthController.logout);
-router.get('/refresh-token', AuthController.generateAccessTokenUsingRefreshToken);
+router.get("/logout", AuthController.logout);
+router.get(
+  "/refresh-token",
+  AuthController.generateAccessTokenUsingRefreshToken,
+);
 
 export const AuthRoutes = router;

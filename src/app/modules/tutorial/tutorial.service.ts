@@ -11,8 +11,16 @@ type TutorialPayload = {
 };
 
 const createOrUpdateTutorial = async (payload: TutorialPayload) => {
-  if (!payload.tutorialNumber || !payload.name || !payload.title || !payload.videoLink) {
-    throw new AppError(400, "Tutorial number, name, title and video link are required");
+  if (
+    !payload.tutorialNumber ||
+    !payload.name ||
+    !payload.title ||
+    !payload.videoLink
+  ) {
+    throw new AppError(
+      400,
+      "Tutorial number, name, title and video link are required",
+    );
   }
 
   if (!payload.thumbnailImage) {

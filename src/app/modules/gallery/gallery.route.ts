@@ -23,29 +23,49 @@ const extensions: Record<string, string> = {
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, callback) => callback(null, galleryDirectory),
-    filename: (_req, file, callback) => callback(null, randomUUID() + (extensions[file.mimetype] || ".img")),
+    filename: (_req, file, callback) =>
+      callback(null, randomUUID() + (extensions[file.mimetype] || ".img")),
   }),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, callback) => {
-    if (!extensions[file.mimetype]) return callback(new AppError(400, "Only PNG, JPEG, WEBP and GIF images are supported"));
+    if (!extensions[file.mimetype])
+      return callback(
+        new AppError(400, "Only PNG, JPEG, WEBP and GIF images are supported"),
+      );
     callback(null, true);
   },
 });
 
-const handleGalleryUpload = (req: Request, res: Response, next: NextFunction) => {
+const handleGalleryUpload = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   upload.single("image")(req, res, (error) => {
     if (!error) return next();
     if (error instanceof AppError) return next(error);
     const code = (error as { code?: string }).code;
-    if (code === "LIMIT_FILE_SIZE") return next(new AppError(413, "Gallery images must be 5 MB or smaller"));
-    if (code?.startsWith("LIMIT")) return next(new AppError(400, "Upload one image at a time"));
+    if (code === "LIMIT_FILE_SIZE")
+      return next(new AppError(413, "Gallery images must be 5 MB or smaller"));
+    if (code?.startsWith("LIMIT"))
+      return next(new AppError(400, "Upload one image at a time"));
     next(error);
   });
 };
 
 router.get("/", GalleryController.listGalleryImages);
-router.post("/", auth(Role.admin), handleGalleryUpload, GalleryController.createGalleryImage);
-router.patch("/:id", auth(Role.admin), handleGalleryUpload, GalleryController.updateGalleryImage);
+router.post(
+  "/",
+  auth(Role.admin),
+  handleGalleryUpload,
+  GalleryController.createGalleryImage,
+);
+router.patch(
+  "/:id",
+  auth(Role.admin),
+  handleGalleryUpload,
+  GalleryController.updateGalleryImage,
+);
 router.delete("/:id", auth(Role.admin), GalleryController.deleteGalleryImage);
 
 export const GalleryRoutes = router;

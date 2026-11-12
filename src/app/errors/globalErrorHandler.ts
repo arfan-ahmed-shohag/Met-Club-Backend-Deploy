@@ -3,7 +3,7 @@ import { Prisma } from "../../../generated/prisma/client";
 // 👇 Import Fix: পুরো লাইব্রেরি ইম্পোর্ট করে destructure করুন
 import jwt from "jsonwebtoken";
 import RequestValidationError from "./requestValidationError";
-const { JsonWebTokenError, TokenExpiredError } = jwt; 
+const { JsonWebTokenError, TokenExpiredError } = jwt;
 
 class CustomError extends Error {
   statusCode: number;
@@ -17,7 +17,7 @@ class CustomError extends Error {
 // আপনার AppError ক্লাসটি যদি আলাদা ফাইলে থাকে, তবে সেটি ইম্পোর্ট করে নিন।
 // অথবা এখানে ইন্টারফেস ব্যবহার করতে পারেন।
 interface IAppError extends Error {
-    statusCode?: number;
+  statusCode?: number;
 }
 
 export const globalErrorHandler = (
@@ -41,23 +41,22 @@ export const globalErrorHandler = (
       statusCode = 404;
       message = "Record not found";
     }
-  } 
+  }
   // ২. Prisma Validation Error
   else if (error instanceof Prisma.PrismaClientValidationError) {
     statusCode = 400;
     message = "Validation Error";
-  } 
+  }
   // ৩. JWT Errors (Import fix এর পর এটি কাজ করবে)
   else if (error instanceof TokenExpiredError) {
     statusCode = 401;
     message = "Unauthorized";
     errorMessage = "Access token expired. Please log in again.";
-  } 
-  else if (error instanceof JsonWebTokenError) {
+  } else if (error instanceof JsonWebTokenError) {
     statusCode = 401;
     message = "Unauthorized";
     errorMessage = "Invalid token provided.";
-  } 
+  }
   // ৪. Custom AppError handling
   else if (error.statusCode) {
     statusCode = error.statusCode;
@@ -70,7 +69,9 @@ export const globalErrorHandler = (
     statusCode,
     message,
     errorMessage,
-    ...(error instanceof RequestValidationError ? { errors: error.errors } : {}),
+    ...(error instanceof RequestValidationError
+      ? { errors: error.errors }
+      : {}),
     // error, // প্রোডাকশনে এটি অফ রাখাই ভালো
   });
 };

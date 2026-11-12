@@ -17,24 +17,33 @@ const thumbnailImages = [
 
 async function seedHomeVideos() {
   const videos = thumbnailImages.map((thumbnailImage, index) => {
-      const number = String(index + 1).padStart(2, "0");
-      return {
-        id: `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
-        name: `ডেমো ভিডিও ${number}`,
-        title: `হোম ভিডিও সেকশন পরীক্ষার নমুনা ${number} — অ্যাডমিন থেকে আসল ভিডিও দিন`,
-        nameEn: "Demo video " + number,
-        titleEn: "Sample home video description " + number + " - replace this with the real video description.",
-        videoLink: sampleVideoLink,
-        thumbnailImage,
-      };
+    const number = String(index + 1).padStart(2, "0");
+    return {
+      id: `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+      name: `ডেমো ভিডিও ${number}`,
+      title: `হোম ভিডিও সেকশন পরীক্ষার নমুনা ${number} — অ্যাডমিন থেকে আসল ভিডিও দিন`,
+      nameEn: "Demo video " + number,
+      titleEn:
+        "Sample home video description " +
+        number +
+        " - replace this with the real video description.",
+      videoLink: sampleVideoLink,
+      thumbnailImage,
+    };
   });
-  await Promise.all(videos.map(({ id, ...video }) => prisma.homeVideo.upsert({
-    where: { id },
-    create: { id, ...video },
-    update: { nameEn: video.nameEn, titleEn: video.titleEn },
-  })));
+  await Promise.all(
+    videos.map(({ id, ...video }) =>
+      prisma.homeVideo.upsert({
+        where: { id },
+        create: { id, ...video },
+        update: { nameEn: video.nameEn, titleEn: video.titleEn },
+      }),
+    ),
+  );
 
-  console.log(`Seeded ${videos.length} bilingual demo home videos. Existing sample videos received English copy.`);
+  console.log(
+    `Seeded ${videos.length} bilingual demo home videos. Existing sample videos received English copy.`,
+  );
 }
 
 seedHomeVideos()
