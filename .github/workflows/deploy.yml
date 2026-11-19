@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-
 jobs:
   ci:
     name: Build and Test
@@ -54,7 +53,7 @@ jobs:
             cd ~/Met_Club/backend
 
             # Pull latest changes
-            git pull origin deploy
+            git pull origin dev
 
             # Install dependencies
             npm ci --production=false
