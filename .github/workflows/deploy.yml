@@ -9,6 +9,8 @@ jobs:
   ci:
     name: Build and Test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build
 
     steps:
       - name: Checkout Code
@@ -17,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Dependencies
@@ -46,7 +48,7 @@ jobs:
             cd ~/Met_Club
 
             # Pull latest changes
-            git pull origin dev
+            git pull origin deploy
 
             # Install dependencies
             npm ci --production=false
