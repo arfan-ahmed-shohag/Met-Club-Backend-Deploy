@@ -25,7 +25,6 @@ export function parseRegistration(input: unknown): IUser {
   for (const [field, validate] of [
     ["fullName", validateName],
     ["email", validateEmail],
-    ["guardianPhone", validatePhone],
     ["password", validatePassword],
   ] as const) {
     const result = validate(body[field]);
@@ -45,13 +44,18 @@ export function parseRegistration(input: unknown): IUser {
   const division = normalizeName(body.division);
   const district = normalizeName(body.district);
   const thana = normalizeName(body.thana);
+  const isOtherLocation = division === "Others" && district === "Others" && thana === "Others";
+  const phoneValidation = isOtherLocation
+    ? /^\+[1-9]\d{7,14}$/.test(normalizePhone(body.guardianPhone)) || "Enter a valid international phone number, including country code."
+    : validatePhone(body.guardianPhone);
+  if (phoneValidation !== true) errors.guardianPhone = phoneValidation;
   const selectedDivision = locations.find((item) => item.name === division);
   const selectedDistrict = selectedDivision?.districts.find(
     (item) => item.name === district,
   );
-  if (!selectedDivision) errors.division = "সঠিক বিভাগ নির্বাচন করুন";
-  if (!selectedDistrict) errors.district = "নির্বাচিত বিভাগের জেলা নির্বাচন করুন";
-  if (!selectedDistrict?.thanas.includes(thana))
+  if (!isOtherLocation && !selectedDivision) errors.division = "সঠিক বিভাগ নির্বাচন করুন";
+  if (!isOtherLocation && !selectedDistrict) errors.district = "নির্বাচিত বিভাগের জেলা নির্বাচন করুন";
+  if (!isOtherLocation && !selectedDistrict?.thanas.includes(thana))
     errors.thana = "নির্বাচিত জেলার থানা / উপজেলা নির্বাচন করুন";
   if (typeof body.confirmPassword !== "string" || !body.confirmPassword)
     errors.confirmPassword = "পাসওয়ার্ড আবার লিখুন";

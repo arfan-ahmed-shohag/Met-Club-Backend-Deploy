@@ -93,6 +93,7 @@ export function validateProfileAddress(profile: {
   district: string | null;
   thana: string | null;
 }) {
+  if (profile.division === "Others" && profile.district === "Others" && profile.thana === "Others") return;
   const errors: Record<string, string> = {};
   const division = locations.find((item) => item.name === profile.division);
   const district = division?.districts.find(
