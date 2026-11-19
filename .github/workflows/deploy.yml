@@ -45,7 +45,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Navigate to app directory
-            cd ~/Met_Club
+            cd ~/Met_Club/backend
 
             # Pull latest changes
             git pull origin deploy
