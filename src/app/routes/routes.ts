@@ -1,7 +1,6 @@
 import express from "express";
 import { UserRoutes } from "../modules/user/user.route";
 import { AuthRoutes } from "../modules/auth/auth.route";
-import { TutorialRoutes } from "../modules/tutorial/tutorial.route";
 import { SchoolRoutes } from "../modules/school/school.route";
 import { BlogRoutes } from "../modules/blog/blog.route";
 import { GalleryRoutes } from "../modules/gallery/gallery.route";
@@ -18,10 +17,6 @@ const routes = [
   {
     path: "/auth",
     route: AuthRoutes,
-  },
-  {
-    path: "/tutorials",
-    route: TutorialRoutes,
   },
   {
     path: "/schools",

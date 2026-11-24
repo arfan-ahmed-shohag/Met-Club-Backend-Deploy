@@ -1,9 +1,8 @@
-import { Role, QuizLevel } from "../../../../generated/prisma/client";
+import { Role } from "../../../../generated/prisma/client";
 import bcrypt from "bcrypt";
 import { config } from "../../../config";
 import { prisma } from "../../../lib/prisma";
 import { IUser } from "../../../types";
-import AppError from "../../errors/appErrors";
 import { jwtGenerator } from "../../../utils/jwt";
 import { Secret } from "jsonwebtoken";
 import { StringValue } from "ms";
@@ -58,19 +57,9 @@ const createUser = async (payload: IUser) => {
     password: hashedPassword,
     role: Role.student,
   };
-  const result = await prisma.$transaction(async (transaction) => {
-    const user = await transaction.user.create({
-      data: userData,
-      select: publicUserSelect,
-    });
-    await transaction.isChapterComplete.createMany({
-      data: [1, 14, 15, 3].map((chapterId) => ({
-        userId: user.id,
-        quizLevel: null,
-        chapterId,
-      })),
-    });
-    return user;
+  const result = await prisma.user.create({
+    data: userData,
+    select: publicUserSelect,
   });
   const accessToken = jwtGenerator({
     userInfo: { email: result.email, role: result.role },
@@ -85,168 +74,6 @@ const createUser = async (payload: IUser) => {
   return { ...result, accessToken, refreshToken };
 };
 
-const isChapterCompleted = async (payload: {
-  email: string;
-  chapterId: number;
-}) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: payload.email,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!user) {
-    throw new AppError(404, "User not found!");
-  }
-
-  const chapterCompletion = await prisma.isChapterComplete.findFirst({
-    where: {
-      userId: user.id,
-      chapterId: payload.chapterId,
-    },
-  });
-
-  return chapterCompletion?.isComplete || false;
-};
-
-const isChapterOneCompleted = async (payload: { email: string }) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: payload.email,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!user) {
-    throw new AppError(404, "User not found!");
-  }
-  const chapterCompletion = await prisma.isChapterComplete.findFirst({
-    where: {
-      userId: user.id,
-      chapterId: 1,
-    },
-  });
-
-  if (
-    chapterCompletion?.isComplete &&
-    chapterCompletion.quizLevel === QuizLevel.hard
-  ) {
-    return true;
-  }
-
-  return false;
-};
-
-const updateChapterCompletion = async (payload: {
-  email: string;
-  chapterId: number;
-}) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: payload.email,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!user) {
-    throw new AppError(404, "User not found!");
-  }
-
-  const updatedCompletion = await prisma.isChapterComplete.upsert({
-    where: {
-      userId_chapterId: {
-        userId: user.id,
-        chapterId: payload.chapterId,
-      },
-    },
-    update: {
-      isComplete: true,
-    },
-    create: {
-      userId: user.id,
-      chapterId: payload.chapterId,
-      isComplete: true,
-    },
-  });
-
-  return updatedCompletion;
-};
-
-const quizLevelInfo = async (payload: { email: string; chapterId: number }) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: payload.email,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!user) {
-    throw new AppError(404, "User not found!");
-  }
-
-  const chapterCompletion = await prisma.isChapterComplete.findFirst({
-    where: {
-      userId: user.id,
-      chapterId: payload.chapterId,
-    },
-    select: {
-      quizLevel: true,
-    },
-  });
-
-  return chapterCompletion?.quizLevel || null;
-};
-
-const quizLevelUpdate = async (payload: {
-  email: string;
-  chapterId: number;
-  quizLevel: QuizLevel;
-}) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: payload.email,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (!user) {
-    throw new AppError(404, "User not found!");
-  }
-
-  const chapterCompletion = await prisma.isChapterComplete.findFirst({
-    where: {
-      userId: user.id,
-      chapterId: payload.chapterId,
-    },
-    select: {
-      isComplete: true,
-    },
-  });
-
-
-  const updatedQuizLevel = await prisma.isChapterComplete.updateMany({
-    where: {
-      userId: user.id,
-      chapterId: payload.chapterId,
-    },
-    data: {
-      quizLevel: payload.quizLevel,
-    },
-  });
-  return updatedQuizLevel;
-};
-
 export const UserService = {
   createUser,
-  isChapterCompleted,
-  isChapterOneCompleted,
-  updateChapterCompletion,
-  quizLevelInfo,
-  quizLevelUpdate,
 };

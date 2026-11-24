@@ -37,26 +37,6 @@ model User {
   blogPosts BlogPost[]
 }
 
-model IsChapterComplete {
-  userId     String
-  chapterId  Int
-  quizLevel  QuizLevel?
-  isComplete Boolean    @default(false)
-
-  @@id([userId, chapterId])
-}
-
-model Tutorial {
-  id             Int      @id @default(autoincrement())
-  tutorialNumber Int      @unique
-  name           String
-  title          String
-  thumbnailImage String
-  videoLink      String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
 model GalleryImage {
   id        String   @id @default(uuid())
   imageUrl  String
@@ -150,12 +130,6 @@ enum PdfResourceCategory {
   comics
   flyer
   pressRelease
-}
-
-enum QuizLevel {
-  easy
-  medium
-  hard
 }
 
 model School {

@@ -36,19 +36,13 @@ prisma.user.findUnique = async (args) => {
     const record = accounts.get(args.where.email.toLowerCase());
     return record && (!args.where.status || record.status === args.where.status) ? selected(record, args.select) : null;
 };
-prisma.$transaction = async (callback) => callback({
-    user: { create: async ({ data, select }) => {
-        databaseCalls++;
-        savedRegistration = { ...data };
-        const record = { ...data, id: "new-user", status: "active", profileImg: data.profileImg ?? null };
-        accounts.set(record.email.toLowerCase(), record);
-        return selected(record, select);
-    } },
-    isChapterComplete: { createMany: async ({ data }) => {
-        assert.equal(data.length, 4);
-        return { count: data.length };
-    } },
-});
+prisma.user.create = async ({ data, select }) => {
+    databaseCalls++;
+    savedRegistration = { ...data };
+    const record = { ...data, id: "new-user", status: "active", profileImg: data.profileImg ?? null };
+    accounts.set(record.email.toLowerCase(), record);
+    return selected(record, select);
+};
 
 const server = await new Promise(resolve => {
     const listener = app.listen(0, "127.0.0.1", () => resolve(listener));
