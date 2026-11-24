@@ -44,6 +44,8 @@ model Student {
 
   profileImg String?
 
+  gameScore GameScore?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -58,6 +60,23 @@ model Admin {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Game leaderboard (game.meteorologyclub.com). One row per student: only the
+// first finished game is recorded. Ranked by score desc, time asc, createdAt asc.
+model GameScore {
+  id        String  @id @default(uuid())
+  // References Student.id (not the "Met-Club-N" Student.studentId).
+  studentId String  @unique
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  score Int
+  // Seconds taken to finish the game.
+  time  Float
+
+  createdAt DateTime @default(now())
+
+  @@index([score(sort: Desc), time, createdAt])
 }
 
 model GalleryImage {
@@ -101,34 +120,34 @@ model Story {
 }
 
 model PdfResource {
-  id             String              @id @default(uuid())
-  category       PdfResourceCategory
-  titleBn        String
-  titleEn        String
-  descriptionBn  String
-  descriptionEn  String
-  pdfUrl         String
-  pdfUrlEn       String?
+  id               String              @id @default(uuid())
+  category         PdfResourceCategory
+  titleBn          String
+  titleEn          String
+  descriptionBn    String
+  descriptionEn    String
+  pdfUrl           String
+  pdfUrlEn         String?
   featuredImageUrl String?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@index([category, createdAt])
 }
 
 model BlogPost {
-  id          String        @id @default(uuid())
+  id            String     @id @default(uuid())
   title         String
-  titleEn       String        @default("")
+  titleEn       String     @default("")
   content       String
-  contentEn     String        @default("")
+  contentEn     String     @default("")
   featuredImage String?
   status        BlogStatus @default(pending)
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  publishedAt DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  authorId      String
+  author        User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   @@index([status, createdAt])
   @@index([authorId])
@@ -157,7 +176,7 @@ enum PdfResourceCategory {
 
 model School {
   id          Int          @id @default(autoincrement())
-  locationKey String       
+  locationKey String
   nameBn      String
   nameEn      String
   videoLink   String?
@@ -182,4 +201,3 @@ model ClubMember {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-

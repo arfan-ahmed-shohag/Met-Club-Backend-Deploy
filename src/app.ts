@@ -14,6 +14,8 @@ app.use(
       "http://localhost:5173",
       "https://meteorologyclub.com",
       "https://www.meteorologyclub.com",
+      // Unity WebGL game; it calls the API with the shared refresh-token cookie.
+      "https://game.meteorologyclub.com",
     ],
     credentials: true,
   }),
