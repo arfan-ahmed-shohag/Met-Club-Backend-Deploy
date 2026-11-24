@@ -229,7 +229,6 @@ const quizLevelUpdate = async (payload: {
     },
   });
 
-  console.log(chapterCompletion);
 
   const updatedQuizLevel = await prisma.isChapterComplete.updateMany({
     where: {
