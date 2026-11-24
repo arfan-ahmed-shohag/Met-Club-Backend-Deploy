@@ -46,4 +46,35 @@ const getStudentReach = async () => {
   };
 };
 
-export const StatsService = { getStudentReach };
+// Students outside Bangladesh register with division/district/thana "Others".
+const OTHER_COUNTRY_DIVISION = "Others";
+
+const VISITS_KEY = "visits";
+
+// Counts one visitor. The frontend sends this at most once per browser per 30 days.
+const recordVisit = async () => {
+  await prisma.siteCounter.upsert({
+    where: { key: VISITS_KEY },
+    create: { key: VISITS_KEY, value: 1 },
+    update: { value: { increment: 1 } },
+  });
+};
+
+// Public, aggregate-only numbers for the Home page "community" cards.
+const getCommunity = async () => {
+  const [visits, totalStudents, otherCountryUsers] = await Promise.all([
+    prisma.siteCounter.findUnique({ where: { key: VISITS_KEY } }),
+    prisma.student.count({ where: activeStudents }),
+    prisma.student.count({
+      where: { ...activeStudents, division: OTHER_COUNTRY_DIVISION },
+    }),
+  ]);
+
+  return {
+    totalVisitors: visits?.value ?? 0,
+    bangladeshUsers: totalStudents - otherCountryUsers,
+    otherCountryUsers,
+  };
+};
+
+export const StatsService = { getStudentReach, recordVisit, getCommunity };

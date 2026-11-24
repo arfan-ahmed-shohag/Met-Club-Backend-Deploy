@@ -79,6 +79,14 @@ model GameScore {
   @@index([score(sort: Desc), time, createdAt])
 }
 
+// Site-wide counters keyed by name. "visits" is the Home "total visitors":
+// the frontend counts each browser at most once per 30 days. No IPs are stored.
+model SiteCounter {
+  key       String   @id
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
 model GalleryImage {
   id        String   @id @default(uuid())
   imageUrl  String

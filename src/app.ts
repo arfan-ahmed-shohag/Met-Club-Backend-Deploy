@@ -8,6 +8,11 @@ import path from "path";
 
 const app = express();
 
+// Production runs behind nginx on the same machine. Trust X-Forwarded-For only
+// from a loopback proxy so req.ip is the visitor's IP and can't be spoofed
+// (used by the in-memory visit rate limit).
+app.set("trust proxy", "loopback");
+
 app.use(
   cors({
     origin: [
