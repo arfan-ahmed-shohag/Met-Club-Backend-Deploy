@@ -8,6 +8,7 @@ import { HomeVideoRoutes } from "../modules/homeVideo/homeVideo.route";
 import { StoryRoutes } from "../modules/story/story.route";
 import { PdfResourceRoutes } from "../modules/pdfResource/pdfResource.route";
 import { GameRoutes } from "../modules/game/game.route";
+import { StatsRoutes } from "../modules/stats/stats.route";
 const router = express.Router();
 
 const routes = [
@@ -46,6 +47,10 @@ const routes = [
   {
     path: "/game",
     route: GameRoutes,
+  },
+  {
+    path: "/stats",
+    route: StatsRoutes,
   },
 ];
 
