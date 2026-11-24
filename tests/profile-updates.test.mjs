@@ -19,11 +19,26 @@ process.chdir(testDirectory);
 const [{ default: app }, { prisma }] = await Promise.all([import('../src/app.ts'), import('../src/lib/prisma.ts')]);
 const users = [
   { id: 'one', email: 'one@example.com', fullName: 'First User', studentId: 'Met-Club-1', institution: 'Test School', class: 7, guardianPhone: '01712345678', division: 'ঢাকা', district: 'ঢাকা', thana: 'ধানমন্ডি', role: 'student', status: 'active', profileImg: null, password: await bcrypt.hash('abc123', 4) },
+  { id: 'admin', email: 'admin@example.com', fullName: 'Site Admin', role: 'admin', status: 'active', profileImg: null, password: await bcrypt.hash('adminPassword', 4) },
   { id: 'two', email: 'two@example.com', fullName: 'Second User', studentId: 'Met-Club-2', institution: 'Other School', class: 0, guardianPhone: '01812345678', division: null, district: null, thana: null, role: 'student', status: 'active', profileImg: null, password: await bcrypt.hash('otherPassword', 4) },
 ];
+const TWO = 2;
 const writes = [];
 let failUpdate = false;
-const select = (user, fields) => fields ? Object.fromEntries(Object.keys(fields).filter(key => fields[key]).map(key => [key, user[key]])) : { ...user };
+// Records stay flat for easy assertions; the fakes map Prisma's nested
+// student/admin profile selects and writes onto them.
+const project = (record, fields) => {
+  if (!fields) return { ...record };
+  const out = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (!value) continue;
+    if (key === 'student' || key === 'admin') out[key] = record.role === key ? project(record, value.select) : null;
+    else out[key] = record[key];
+  }
+  return out;
+};
+const flatten = ({ student, admin, ...rest }) => ({ ...rest, ...(student?.create ?? student?.update ?? {}), ...(admin?.create ?? admin?.update ?? {}) });
+const select = project;
 const matches = (user, where) => Object.entries(where).every(([key, value]) => user[key] === value);
 prisma.user.findUnique = async ({ where, select: fields }) => {
   const user = users.find(item => matches(item, where));
@@ -37,8 +52,8 @@ prisma.user.update = async ({ where, data, select: fields }) => {
   if (failUpdate) throw new Error('Simulated persistence failure');
   const user = users.find(item => matches(item, where));
   assert.ok(user);
-  writes.push({ id: user.id, data });
-  Object.assign(user, data);
+  writes.push({ id: user.id, data: flatten(data) });
+  Object.assign(user, flatten(data));
   return select(user, fields);
 };
 prisma.user.updateMany = async ({ where, data }) => {
@@ -70,9 +85,9 @@ test('all profile mutation endpoints require an authenticated active account', a
     assert.equal((await request(route, payload, null)).status, 401);
     assert.equal((await request(route, payload, 'Bearer invalid')).status, 401);
   }
-  users[1].status = 'blocked';
-  assert.equal((await request('/user/me', { fullName: 'Blocked User' }, `Bearer ${token(users[1].email)}`)).status, 401);
-  users[1].status = 'active';
+  users[TWO].status = 'blocked';
+  assert.equal((await request('/user/me', { fullName: 'Blocked User' }, `Bearer ${token(users[TWO].email)}`)).status, 401);
+  users[TWO].status = 'active';
   assert.equal(writes.length, before);
 });
 test('email, identity, role, status, image URL and password cannot be changed through the profile endpoint', async () => {
@@ -103,9 +118,9 @@ test('profile saves normalized editable values only for the authenticated user',
   assert.equal(result.body.data.class, 8);
   assert.equal(result.body.data.thana, 'কালিয়াকৈর'.normalize('NFC'));
   assert.equal(result.body.data.email, 'one@example.com');
-  assert.equal(users[1].fullName, 'Second User');
+  assert.equal(users[TWO].fullName, 'Second User');
   assert.ok(!Object.hasOwn(result.body.data, 'password'));
-  assert.equal((await request('/user/me', { fullName: 'Legacy User' }, `Bearer ${token(users[1].email)}`)).status, 200);
+  assert.equal((await request('/user/me', { fullName: 'Legacy User' }, `Bearer ${token(users[TWO].email)}`)).status, 200);
 });
 test('photo uploads reject missing, spoofed, SVG and oversized images', async () => {
   const before = writes.length;
@@ -126,7 +141,7 @@ test('photo upload saves a generated filename and removes only the previous owne
   assert.equal(second.status, 200);
   assert.notEqual(second.body.data.profileImg, first.body.data.profileImg);
   await assert.rejects(access(firstPath));
-  assert.equal(users[1].profileImg, null);
+  assert.equal(users[TWO].profileImg, null);
   assert.ok(!Object.hasOwn(second.body.data, 'password'));
   const { readdir } = await import('node:fs/promises');
   const before = await readdir(path.join(testDirectory, 'uploads/profiles'));
@@ -158,9 +173,27 @@ test('password is hashed, preserves email and profile, and only the new password
   assert.ok(await bcrypt.compare('newPassword123', users[0].password));
   assert.equal(await bcrypt.compare('abc123', users[0].password), false);
   assert.equal(users[0].email, 'one@example.com');
-  assert.ok(await bcrypt.compare('otherPassword', users[1].password));
+  assert.ok(await bcrypt.compare('otherPassword', users[TWO].password));
   for (const [password, expected] of [['abc123', 401], ['newPassword123', 200]]) {
     const response = await fetch(base + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: users[0].email, password }) });
     assert.equal(response.status, expected);
   }
+});
+test('admin profile lives in its own table: name is editable, student fields are not', async () => {
+  const admin = users[1];
+  const adminToken = `Bearer ${token(admin.email)}`;
+  const me = await fetch(base + '/auth/me', { headers: { Authorization: adminToken } }).then(r => r.json());
+  assert.equal(me.data.fullName, 'Site Admin');
+  assert.equal(me.data.role, 'admin');
+  for (const field of ['studentId', 'institution', 'class', 'guardianPhone', 'division', 'district', 'thana']) assert.equal(me.data[field], null, field);
+  const before = writes.length;
+  const rejected = await request('/user/me', { fullName: 'New Admin', institution: 'School' }, adminToken);
+  assert.equal(rejected.status, 400);
+  assert.equal(typeof rejected.body.errors.institution, 'string');
+  assert.equal(writes.length, before);
+  const updated = await request('/user/me', { fullName: '  New   Admin ' }, adminToken);
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.data.fullName, 'New Admin');
+  assert.equal(admin.fullName, 'New Admin');
+  assert.equal(admin.institution, undefined);
 });

@@ -6,11 +6,14 @@ import { IUser } from "../../../types";
 import { jwtGenerator } from "../../../utils/jwt";
 import { Secret } from "jsonwebtoken";
 import { StringValue } from "ms";
-import { publicUserSelect } from "../../../utils/publicUserSelect";
+import {
+  publicUserSelect,
+  toPublicUser,
+} from "../../../utils/publicUserSelect";
 import RequestValidationError from "../../errors/requestValidationError";
 
 const generateStudentId = async () => {
-  const lastUser = await prisma.user.findFirst({
+  const lastStudent = await prisma.student.findFirst({
     orderBy: {
       createdAt: "desc",
     },
@@ -21,14 +24,15 @@ const generateStudentId = async () => {
 
   let nextNumber = 1;
 
-  if (lastUser?.studentId) {
-    const lastNumber = parseInt(lastUser.studentId.split("-").pop() || "0");
+  if (lastStudent?.studentId) {
+    const lastNumber = parseInt(lastStudent.studentId.split("-").pop() || "0");
     nextNumber = lastNumber + 1;
   }
 
   return `Met-Club-${nextNumber}`;
 };
 
+// Registration always creates a student: a login account plus its Student profile.
 const createUser = async (payload: IUser) => {
   const existingUser = await prisma.user.findFirst({
     where: { email: { equals: payload.email, mode: "insensitive" } },
@@ -43,24 +47,28 @@ const createUser = async (payload: IUser) => {
     payload.password,
     Number(config.salt_rounds),
   );
-  const userData = {
-    fullName: payload.fullName,
-    email: payload.email,
-    institution: payload.institution,
-    class: payload.class,
-    guardianPhone: payload.guardianPhone,
-    division: payload.division,
-    district: payload.district,
-    thana: payload.thana,
-    profileImg: payload.profileImg,
-    studentId: await generateStudentId(),
-    password: hashedPassword,
-    role: Role.student,
-  };
-  const result = await prisma.user.create({
-    data: userData,
+  const created = await prisma.user.create({
+    data: {
+      email: payload.email,
+      password: hashedPassword,
+      role: Role.student,
+      student: {
+        create: {
+          studentId: await generateStudentId(),
+          fullName: payload.fullName,
+          institution: payload.institution,
+          class: payload.class,
+          guardianPhone: payload.guardianPhone,
+          division: payload.division,
+          district: payload.district,
+          thana: payload.thana,
+          profileImg: payload.profileImg,
+        },
+      },
+    },
     select: publicUserSelect,
   });
+  const result = toPublicUser(created);
   const accessToken = jwtGenerator({
     userInfo: { email: result.email, role: result.role },
     createSecretKey: config.jwt.token_secret as Secret,

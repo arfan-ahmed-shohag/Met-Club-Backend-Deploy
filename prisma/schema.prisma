@@ -7,13 +7,31 @@ datasource db {
   provider = "postgresql"
 }
 
+// Login account only. Profile data lives in Student or Admin, linked by userId.
 model User {
   id String @id @default(uuid())
 
-  fullName  String
-  studentId String @unique
+  email    String @unique
+  password String
 
-  email String @unique
+  role   Role   @default(student)
+  status Status @default(active)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student   Student?
+  admin     Admin?
+  blogPosts BlogPost[]
+}
+
+model Student {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  studentId String @unique
+  fullName  String
 
   institution String
   class       Int
@@ -24,17 +42,22 @@ model User {
   district String?
   thana    String?
 
-  password String
-
   profileImg String?
-
-  role Role @default(student)
-
-  status Status @default(active)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  blogPosts BlogPost[]
+}
+
+model Admin {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName   String
+  profileImg String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model GalleryImage {

@@ -7,7 +7,10 @@ import AppError from "../../errors/appErrors";
 import { Status } from "../../../../generated/prisma/enums";
 import { jwtGenerator, jwtVerifier } from "../../../utils/jwt";
 
-import { publicUserSelect } from "../../../utils/publicUserSelect";
+import {
+  publicUserSelect,
+  toPublicUser,
+} from "../../../utils/publicUserSelect";
 
 const getCurrentUser = async (email: string) => {
   const user = await prisma.user.findUnique({
@@ -15,7 +18,7 @@ const getCurrentUser = async (email: string) => {
     select: publicUserSelect,
   });
   if (!user) throw new AppError(401, "Unauthorized");
-  return user;
+  return toPublicUser(user);
 };
 
 const loginUser = async (payload: { email: string; password: string }) => {
@@ -24,6 +27,7 @@ const loginUser = async (payload: { email: string; password: string }) => {
       email: { equals: payload.email, mode: "insensitive" },
       status: Status.active,
     },
+    select: { email: true, role: true, password: true },
   });
 
   if (!isUserExist) {
@@ -88,6 +92,7 @@ const generateAccessTokenUsingRefreshToken = async (refreshToken: string) => {
       email: decoded.email,
       status: Status.active,
     },
+    select: { email: true, role: true },
   });
 
   if (!user) {

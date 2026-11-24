@@ -1,12 +1,20 @@
 import { BlogStatus } from "../../../../generated/prisma/enums";
 import AppError from "../../errors/appErrors";
 import { prisma } from "../../../lib/prisma";
+import {
+  authorProfileSelect,
+  toAuthor,
+} from "../../../utils/publicUserSelect";
 
 const authorSelection = {
   id: true,
-  fullName: true,
-  profileImg: true,
+  ...authorProfileSelect,
 } as const;
+
+// Replace the nested student/admin profile with flat author fields.
+const withAuthor = <T extends { author: Parameters<typeof toAuthor>[0] }>(
+  post: T,
+) => ({ ...post, author: toAuthor(post.author) });
 
 const createBlogPost = async (
   authorEmail: string,
@@ -28,7 +36,7 @@ const createBlogPost = async (
       author: { connect: { email: authorEmail } },
     },
     include: { author: { select: authorSelection } },
-  });
+  }).then(withAuthor);
 };
 
 const getPublishedBlogPosts = async () => {
@@ -36,7 +44,7 @@ const getPublishedBlogPosts = async () => {
     where: { status: BlogStatus.published },
     orderBy: { publishedAt: "desc" },
     include: { author: { select: authorSelection } },
-  });
+  }).then((posts) => posts.map(withAuthor));
 };
 
 const getBlogPostsByAuthor = async (authorEmail: string) => {
@@ -44,7 +52,7 @@ const getBlogPostsByAuthor = async (authorEmail: string) => {
     where: { author: { email: authorEmail } },
     orderBy: { createdAt: "desc" },
     include: { author: { select: authorSelection } },
-  });
+  }).then((posts) => posts.map(withAuthor));
 };
 
 const getAllBlogPostsForAdmin = async () => {
@@ -55,7 +63,7 @@ const getAllBlogPostsForAdmin = async () => {
         select: { ...authorSelection, email: true },
       },
     },
-  });
+  }).then((posts) => posts.map(withAuthor));
 };
 
 const publishBlogPost = async (id: string) => {
@@ -67,14 +75,14 @@ const publishBlogPost = async (id: string) => {
     return prisma.blogPost.findUniqueOrThrow({
       where: { id },
       include: { author: { select: { ...authorSelection, email: true } } },
-    });
+    }).then(withAuthor);
   }
 
   return prisma.blogPost.update({
     where: { id },
     data: { status: BlogStatus.published, publishedAt: new Date() },
     include: { author: { select: { ...authorSelection, email: true } } },
-  });
+  }).then(withAuthor);
 };
 
 const unpublishBlogPost = async (id: string) => {
@@ -86,14 +94,14 @@ const unpublishBlogPost = async (id: string) => {
     return prisma.blogPost.findUniqueOrThrow({
       where: { id },
       include: { author: { select: { ...authorSelection, email: true } } },
-    });
+    }).then(withAuthor);
   }
 
   return prisma.blogPost.update({
     where: { id },
     data: { status: BlogStatus.pending, publishedAt: null },
     include: { author: { select: { ...authorSelection, email: true } } },
-  });
+  }).then(withAuthor);
 };
 
 export const BlogService = {

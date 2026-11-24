@@ -23,13 +23,29 @@ accounts.set(legacyUser.email.toLowerCase(), legacyUser);
 accounts.set("blocked@example.com", { ...legacyUser, email: "blocked@example.com", status: "blocked" });
 let databaseCalls = 0;
 let savedRegistration;
-const selected = (record, select) => record ? select ? Object.fromEntries(Object.keys(select).filter(key => select[key]).map(key => [key, record[key]])) : { ...record } : null;
+// Records stay flat for easy assertions; the fakes map Prisma's nested
+// student/admin profile selects and writes onto them.
+const project = (record, fields) => {
+  if (!fields) return { ...record };
+  const out = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (!value) continue;
+    if (key === 'student' || key === 'admin') out[key] = record.role === key ? project(record, value.select) : null;
+    else out[key] = record[key];
+  }
+  return out;
+};
+const flatten = ({ student, admin, ...rest }) => ({ ...rest, ...(student?.create ?? student?.update ?? {}), ...(admin?.create ?? admin?.update ?? {}) });
+const selected = (record, select) => record ? project(record, select) : null;
 prisma.user.findFirst = async (args) => {
     databaseCalls++;
-    if (args.orderBy) return { studentId: "Met-Club-10" };
     const email = args.where.email.equals.toLowerCase();
     const record = accounts.get(email);
     return record && (!args.where.status || record.status === args.where.status) ? selected(record, args.select) : null;
+};
+prisma.student.findFirst = async () => {
+    databaseCalls++;
+    return { studentId: "Met-Club-10" };
 };
 prisma.user.findUnique = async (args) => {
     databaseCalls++;
@@ -38,8 +54,8 @@ prisma.user.findUnique = async (args) => {
 };
 prisma.user.create = async ({ data, select }) => {
     databaseCalls++;
-    savedRegistration = { ...data };
-    const record = { ...data, id: "new-user", status: "active", profileImg: data.profileImg ?? null };
+    savedRegistration = flatten(data);
+    const record = { ...savedRegistration, id: "new-user", status: "active", profileImg: savedRegistration.profileImg ?? null };
     accounts.set(record.email.toLowerCase(), record);
     return selected(record, select);
 };

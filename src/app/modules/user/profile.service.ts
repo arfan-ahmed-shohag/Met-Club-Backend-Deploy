@@ -4,7 +4,10 @@ import { mkdir, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { config } from "../../../config";
 import { prisma } from "../../../lib/prisma";
-import { publicUserSelect } from "../../../utils/publicUserSelect";
+import {
+  publicUserSelect,
+  toPublicUser,
+} from "../../../utils/publicUserSelect";
 import AppError from "../../errors/appErrors";
 import RequestValidationError from "../../errors/requestValidationError";
 import {
@@ -19,23 +22,41 @@ const currentUser = async (email: string) => {
     select: publicUserSelect,
   });
   if (!user) throw new AppError(401, "Unauthorized");
-  return user;
+  return toPublicUser(user);
 };
+
+// Profile fields an admin may change; everything else is student-only.
+const adminEditableFields = new Set(["fullName"]);
 
 export async function updateProfile(email: string, input: unknown) {
   const update = parseProfileUpdate(input);
   const user = await currentUser(email);
+  if (user.role === "admin") {
+    const errors = Object.fromEntries(
+      Object.keys(update)
+        .filter((field) => !adminEditableFields.has(field))
+        .map((field) => [field, "এই তথ্য পরিবর্তন করা যাবে না"]),
+    );
+    if (Object.keys(errors).length) throw new RequestValidationError(errors);
+    const result = await prisma.user.update({
+      where: { id: user.id, status: "active" },
+      data: { admin: { update: { fullName: update.fullName } } },
+      select: publicUserSelect,
+    });
+    return toPublicUser(result);
+  }
   if (
     ["division", "district", "thana"].some((field) =>
       Object.hasOwn(update, field),
     )
   )
     validateProfileAddress({ ...user, ...update });
-  return prisma.user.update({
+  const result = await prisma.user.update({
     where: { id: user.id, status: "active" },
-    data: update,
+    data: { student: { update: update } },
     select: publicUserSelect,
   });
+  return toPublicUser(result);
 }
 
 function imageExtension(buffer: Buffer, mime: string) {
@@ -87,11 +108,15 @@ export async function updateProfilePhoto(
   await writeFile(filePath, file.buffer, { flag: "wx" });
   let result;
   try {
-    result = await prisma.user.update({
-      where: { id: user.id, status: "active" },
-      data: { profileImg: `/uploads/profiles/${filename}` },
-      select: publicUserSelect,
-    });
+    const profileImg = `/uploads/profiles/${filename}`;
+    const profile = user.role === "admin" ? "admin" : "student";
+    result = toPublicUser(
+      await prisma.user.update({
+        where: { id: user.id, status: "active" },
+        data: { [profile]: { update: { profileImg } } },
+        select: publicUserSelect,
+      }),
+    );
   } catch (error) {
     await unlink(filePath).catch(() => {});
     throw error;

@@ -29,14 +29,10 @@ export const seedAdmin = async () => {
     if (!existingAdmin) {
       await prisma.user.create({
         data: {
-          fullName: "আরিফ রহমান",
-          studentId: "STU-2026-8942",
           email: adminEmail,
           password: hashedPassword,
           role: Role.admin,
-          institution: "ঢাকা কলেজ",
-          class: 11,
-          guardianPhone: "+8801712345678",
+          admin: { create: { fullName: "আরিফ রহমান" } },
         },
       });
 
