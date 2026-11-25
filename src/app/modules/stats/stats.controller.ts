@@ -30,4 +30,18 @@ const community = catchAsync(async (_req: Request, res: Response) => {
   });
 });
 
-export const StatsController = { studentReach, recordVisit, community };
+const dashboard = catchAsync(async (_req: Request, res: Response) => {
+  const data = await StatsService.getDashboard();
+  sendResponse(res, {
+    statusCode: 200,
+    message: "Dashboard stats retrieved successfully!",
+    data,
+  });
+});
+
+export const StatsController = {
+  studentReach,
+  recordVisit,
+  community,
+  dashboard,
+};
