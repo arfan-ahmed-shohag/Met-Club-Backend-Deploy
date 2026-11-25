@@ -43,10 +43,13 @@ prisma.student.findMany = async ({ take, where }) => where
     ? students.filter(s => s.createdAt >= where.createdAt.gte).map(s => ({ createdAt: s.createdAt }))
     : [...students].sort((a, b) => b.createdAt - a.createdAt).slice(0, take)
         .map(({ id, fullName, institution, district, createdAt }) => ({ id, fullName, institution, district, createdAt }));
-prisma.student.groupBy = async ({ by: [field], where }) => {
+prisma.student.groupBy = async ({ by, where }) => {
     const groups = new Map();
-    for (const s of students.filter(s => s.status === where.user.status)) groups.set(s[field], (groups.get(s[field]) ?? 0) + 1);
-    return [...groups].map(([key, count]) => ({ [field]: key, _count: { _all: count } }));
+    for (const s of students.filter(s => s.status === where.user.status && (where.district?.not !== null || s.district !== null))) {
+        const key = JSON.stringify(by.map(field => s[field]));
+        groups.set(key, (groups.get(key) ?? 0) + 1);
+    }
+    return [...groups].map(([key, count]) => ({ ...Object.fromEntries(by.map((field, i) => [field, JSON.parse(key)[i]])), _count: { _all: count } }));
 };
 prisma.siteVisitDay.findMany = async () => [{ day: new Date(dhakaToday + "T00:00:00Z"), count: 4 }];
 prisma.gameScore.groupBy = async () => [
@@ -109,7 +112,11 @@ test("GET /stats/dashboard returns zero-filled daily trends and breakdowns", asy
     assert.equal(analytics.trend.visitors.at(-2).count, 0);
     assert.deepEqual(analytics.byDivision, [{ division: "ঢাকা", students: 2 }, { division: "Others", students: 1 }]);
     assert.deepEqual(analytics.byClass, [{ class: 8, students: 2 }, { class: 10, students: 1 }]);
-    assert.deepEqual(analytics.topInstitutions, [{ institution: "School A", students: 2 }, { institution: "School B", students: 1 }]);
+    assert.deepEqual(analytics.byDistrict, [
+        { district: "ঢাকা", division: "ঢাকা", students: 2 },
+        { district: "Others", division: "Others", students: 1 },
+    ]);
+    assert.ok(!("topInstitutions" in analytics));
     assert.equal(analytics.gameScores.length, 10);
     assert.deepEqual(analytics.gameScores[0], { from: 0, to: 9, students: 1 });
     assert.deepEqual(analytics.gameScores[5], { from: 50, to: 59, students: 2 });

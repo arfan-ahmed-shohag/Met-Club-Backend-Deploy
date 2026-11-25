@@ -101,7 +101,6 @@ const getCommunity = async () => {
 const RECENT_LIMIT = 5;
 const WEEK_MS = 7 * DAY_MS;
 const TREND_DAYS = 365;
-const TOP_INSTITUTIONS = 8;
 const SCORE_BUCKET = 10;
 
 // Charts for the admin overview: daily registrations, blog submissions and
@@ -115,7 +114,7 @@ const getAnalytics = async () => {
   // Start of the first day in Bangladesh time, as an instant.
   const since = new Date(firstDay.getTime() - DHAKA_OFFSET_MS);
 
-  const [students, blogs, visitDays, byDivision, byClass, byInstitution, scores] =
+  const [students, blogs, visitDays, byDivision, byClass, byDistrict, scores] =
     await Promise.all([
       prisma.student.findMany({
         where: { createdAt: { gte: since } },
@@ -140,8 +139,8 @@ const getAnalytics = async () => {
         _count: { _all: true },
       }),
       prisma.student.groupBy({
-        by: ["institution"],
-        where: activeStudents,
+        by: ["division", "district"],
+        where: { ...activeStudents, district: { not: null } },
         _count: { _all: true },
       }),
       prisma.gameScore.groupBy({ by: ["score"], _count: { _all: true } }),
@@ -190,14 +189,14 @@ const getAnalytics = async () => {
     byClass: byClass
       .map((row) => ({ class: row.class, students: row._count._all }))
       .sort((a, b) => a.class - b.class),
-    topInstitutions: byInstitution
-      .filter((row) => row.institution.trim())
+    // Every district with students; district "Others" = outside Bangladesh.
+    byDistrict: byDistrict
       .map((row) => ({
-        institution: row.institution.trim(),
+        district: row.district as string,
+        division: row.division,
         students: row._count._all,
       }))
-      .sort(byCount)
-      .slice(0, TOP_INSTITUTIONS),
+      .sort(byCount),
     gameScores: scoreBuckets,
   };
 };
