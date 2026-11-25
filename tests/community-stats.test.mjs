@@ -24,6 +24,7 @@ const students = [
     { status: "blocked", division: "সিলেট" },
 ];
 const counters = new Map();
+const visitDays = new Map();
 
 prisma.student.count = async ({ where }) => students.filter(s =>
     s.status === where.user.status && (where.division === undefined || s.division === where.division)).length;
@@ -33,6 +34,12 @@ prisma.siteCounter.upsert = async ({ where, create, update }) => {
     const value = counters.has(where.key) ? counters.get(where.key) + update.value.increment : create.value;
     counters.set(where.key, value);
     return { key: where.key, value };
+};
+
+prisma.siteVisitDay.upsert = async ({ where, create, update }) => {
+    const key = where.day.toISOString().slice(0, 10);
+    assert.equal(create.day.toISOString(), key + "T00:00:00.000Z");
+    visitDays.set(key, (visitDays.get(key) ?? 0) + (visitDays.has(key) ? update.count.increment : create.count));
 };
 
 const server = await new Promise(resolve => {
@@ -55,6 +62,9 @@ test("POST /stats/visit counts every visit the frontend sends", async () => {
     const before = await totalVisitors();
     for (const ip of ["203.0.113.5", "203.0.113.5", "198.51.100.7"]) assert.equal((await visitFrom(ip)).status, 200);
     assert.equal(await totalVisitors(), before + 3);
+    // Also counted in today's Bangladesh-time row.
+    const today = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    assert.equal(visitDays.get(today), before + 3);
 });
 
 test("POST /stats/visit rate-limits one IP but not other IPs or a missing client IP", async () => {

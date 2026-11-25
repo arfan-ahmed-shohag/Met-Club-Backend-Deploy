@@ -87,6 +87,13 @@ model SiteCounter {
   updatedAt DateTime @updatedAt
 }
 
+// Visitors counted per day (Bangladesh time), for the admin dashboard trend
+// chart. Incremented together with the SiteCounter "visits" total.
+model SiteVisitDay {
+  day   DateTime @id @db.Date
+  count Int      @default(0)
+}
+
 model GalleryImage {
   id        String   @id @default(uuid())
   imageUrl  String
